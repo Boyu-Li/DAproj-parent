@@ -20,7 +20,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  *
- * 默认的日志实现. 日志模块不关心 key, 只关心 index.
+ * default log achievement, the module of log does not care about key, only cares about index
  *
  * 
  * @see raft.entity.LogEntry
@@ -81,7 +81,7 @@ public class DefaultLogModule implements LogModule {
     }
 
     /**
-     * logEntry 的 index 就是 key. 严格保证递增.
+     * the index of logEntry is key. ensures a increasing monotonicity.
      *
      * @param logEntry
      */

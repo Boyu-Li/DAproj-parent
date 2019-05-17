@@ -16,7 +16,7 @@ import raft.entity.LogEntry;
 
 /**
  *
- * 默认的状态机实现.
+ * default achievement of state machine
  *
  * 
  */
