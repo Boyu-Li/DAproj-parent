@@ -4,21 +4,21 @@ import raft.common.Peer;
 
 /**
  *
- * 集群配置变更接口.
+ * cluster configuration change port
  *
  * 
  */
 public interface ClusterMembershipChanges {
 
     /**
-     * 添加节点.
+     * add node
      * @param newPeer
      * @return
      */
     Result addPeer(Peer newPeer);
 
     /**
-     * 删除节点.
+     * delete node
      * @param oldPeer
      * @return
      */

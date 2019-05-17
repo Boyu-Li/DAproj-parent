@@ -16,10 +16,9 @@ import lombok.ToString;
 @ToString
 public class AentryResult implements Serializable {
 
-	/** 当前的任期号，用于领导人去更新自己 */
+	/** current term，leader can update themself */
     long term;
 
-    /** 璺熼殢鑰呭寘鍚簡鍖归厤涓� prevLogIndex 鍜� prevLogTerm 鐨勬棩蹇楁椂涓虹湡  */
     boolean success;
 
     public AentryResult(long term) {

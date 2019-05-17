@@ -12,14 +12,14 @@ import raft.client.ClientKVReq;
 public interface Node<T> extends LifeCycle{
 
     /**
-     * 设置配置文件.
+     * configration
      *
      * @param config
      */
     void setConfig(NodeConfig config);
 
     /**
-     * 处理请求投票 RPC.
+     * handle voting request
      *
      * @param param
      * @return
@@ -27,7 +27,7 @@ public interface Node<T> extends LifeCycle{
     RvoteResult handlerRequestVote(RvoteParam param);
 
     /**
-     * 处理附加日志请求.
+     * handle appending log request
      *
      * @param param
      * @return
@@ -35,7 +35,7 @@ public interface Node<T> extends LifeCycle{
     AentryResult handlerAppendEntries(AentryParam param);
 
     /**
-     * 处理客户端请求.
+     * handle client request
      *
      * @param request
      * @return
@@ -43,7 +43,7 @@ public interface Node<T> extends LifeCycle{
     ClientKVAck handlerClientRequest(ClientKVReq request);
 
     /**
-     * 转发给 leader 节点.
+     * forward to leader node
      * @param request
      * @return
      */

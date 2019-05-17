@@ -23,11 +23,9 @@ import com.alipay.remoting.exception.RemotingException;
 class Listner implements Runnable {
 	private WatchService service;
 	private String rootPath;
-	private  ListenerThread listener;
 	private int id ;
 
-	public Listner(WatchService service, String rootPath, ListenerThread listener) {
-		this.listener = listener;
+	public Listner(WatchService service, String rootPath) {
 		this.service = service;
 		this.rootPath = rootPath;
 		this.id = 0;
@@ -78,9 +76,8 @@ class Listner implements Runnable {
 						command.add(modify);
 						modify.put("key", id);
 						String content ="modify- -- -- -"+ event.context().toString();
-						String path = event.context().toString();
 						try {
-							BufferedReader in = new BufferedReader(new FileReader("C:/da_test/"+path));
+							BufferedReader in = new BufferedReader(new FileReader(rootPath+"/"+event.context().toString()));
 							String line = in.readLine();
 							if(line!=null) {
 								content = content + "- -- -- -";
@@ -99,23 +96,13 @@ class Listner implements Runnable {
 				}
 				for (int i = 0; i < command.size(); i++) {
 					System.out.println(command.get(i).toJSONString());
-					try {
-						RaftClient.request(command.get(i));
-					} catch (RemotingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					listener.fileOperation(command.get(i).toJSONString());
+					RaftClient.request(command.get(i));
 				}
 				watchKey.reset();
-//				������÷��ͽӿ�
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (RemotingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {

@@ -14,13 +14,13 @@ import lombok.Setter;
 @Setter
 public class RvoteParam extends BaseParam {
 
-    /** 请求选票的候选人的 Id(ip:selfPort) */
+    /** candidate Id(ip:selfPort) */
     String candidateId;
 
-    /** 候选人的最后日志条目的索引值 */
+    /** index of last log for candidate */
     long lastLogIndex;
 
-    /** 候选人最后日志条目的任期号  */
+    /** term of last lof for candidate */
     long lastLogTerm;
 
     private RvoteParam(Builder builder) {

@@ -18,19 +18,19 @@ import lombok.ToString;
 @ToString
 public class AentryParam extends BaseParam {
 
-	/** 领导人的 Id，以便于跟随者重定向请求 */
+	/** leader's Id，to direct clients'requests from followers to leader以便于跟随者重定向请求 */
     String leaderId;
 
-    /**新的日志条目紧随之前的索引值  */
+    /**new log item followed by previous index number  */
     long prevLogIndex;
 
-    /** prevLogIndex 条目的任期号  */
+    /** Term of the prevLog  */
     long preLogTerm;
 
-    /** 准备存储的日志条目（表示心跳时为空；一次性发送多个是为了提高效率） */
+    /** logs ready to write in（empty when represent heart beat；send more one time for higher efficiency） */
     LogEntry[] entries;
 
-    /** 领导人已经提交的日志的索引值  */
+    /** index of log committed  */
     long leaderCommit;
 
     public AentryParam() {

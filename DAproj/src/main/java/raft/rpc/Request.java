@@ -17,17 +17,17 @@ import raft.client.ClientKVReq;
 @ToString
 public class Request<T> implements Serializable {
 
-    /** 请求投票 */
+    /** apply for voting */
     public static final int R_VOTE = 0;
-    /** 附加日志 */
+    /** appending log */
     public static final int A_ENTRIES = 1;
-    /** 客户端 */
+    /** client */
     public static final int CLIENT_REQ = 2;
-    /** 配置变更. add*/
+    /** configuration change. add*/
     public static final int CHANGE_CONFIG_ADD = 3;
-    /** 配置变更. remove*/
+    /** configuration change. remove*/
     public static final int CHANGE_CONFIG_REMOVE = 4;
-    /** 请求类型 */
+    /** requst type */
     private int cmd = -1;
 
     /** param

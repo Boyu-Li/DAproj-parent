@@ -17,12 +17,7 @@ import io.netty.util.internal.StringUtil;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- *
- * 默认的一致性模块实现.
- *
- * 
- */
+
 @Setter
 @Getter
 public class DefaultConsensus implements Consensus {
@@ -41,11 +36,11 @@ public class DefaultConsensus implements Consensus {
     }
 
     /**
-     * 请求投票 RPC
+     * vote request
      *
-     * 接收者实现：
-     *      如果term < currentTerm返回 false （5.2 节）
-     *      如果 votedFor 为空或者就是 candidateId，并且候选人的日志至少和自己一样新，那么就投票给他（5.2 节，5.4 节）
+     * for receivers：
+     *      if term < currentTerm return false 
+     *      if votedFor is empty or it is candidateId，and the log is up to date as its own，vote to him
      */
     @Override
     public RvoteResult requestVote(RvoteParam param) {
@@ -55,35 +50,35 @@ public class DefaultConsensus implements Consensus {
                 return builder.term(node.getCurrentTerm()).voteGranted(false).build();
             }
 
-            // 对方任期没有自己新
+            // he's term is smaller than own
             if (param.getTerm() < node.getCurrentTerm()) {
                 return builder.term(node.getCurrentTerm()).voteGranted(false).build();
             }
 
-            // (当前节点并没有投票 或者 已经投票过了且是对方节点) && 对方日志和自己一样新
+            // (no vote for current node or voted for him) && he's log is up to date as own
             LOGGER.info("node {} current vote for [{}], param candidateId : {}", node.peerSet.getSelf(), node.getVotedFor(), param.getCandidateId());
             LOGGER.info("node {} current term {}, peer term : {}", node.peerSet.getSelf(), node.getCurrentTerm(), param.getTerm());
 
             if ((StringUtil.isNullOrEmpty(node.getVotedFor()) || node.getVotedFor().equals(param.getCandidateId()))) {
 
                 if (node.getLogModule().getLast() != null) {
-                    // 对方没有自己新
+                    // not up to date
                     if (node.getLogModule().getLast().getTerm() > param.getLastLogTerm()) {
                         return RvoteResult.fail();
                     }
-                    // 对方没有自己新
+                    // not up to date
                     if (node.getLogModule().getLastIndex() > param.getLastLogIndex()) {
                         return RvoteResult.fail();
                     }
                 }
 
-                // 切换状态
+                // switch state
                 node.status = NodeStatus.FOLLOWER;
-                // 更新
+                // update
                 node.peerSet.setLeader(new Peer(param.getCandidateId()));
                 node.setCurrentTerm(param.getTerm());
                 node.setVotedFor(param.serverId);
-                // 返回成功
+                // return successful
                 return builder.term(node.currentTerm).voteGranted(true).build();
             }
 
@@ -96,13 +91,13 @@ public class DefaultConsensus implements Consensus {
 
 
     /**
-     * 附加日志(多个日志,为了提高效率) RPC
+     * Append logs(multiple logs, for higher efficiency) RPC
      *
-     * 接收者实现：
-     *    如果 term < currentTerm 就返回 false （5.1 节）
-     *    如果日志在 prevLogIndex 位置处的日志条目的任期号和 prevLogTerm 不匹配，则返回 false （5.3 节）
-     *    如果已经存在的日志条目和新的产生冲突（索引值相同但是任期号不同），删除这一条和之后所有的 （5.3 节）
-     *    附加任何在已有的日志中不存在的条目
+     * For receivers：
+     *    if term < currentTerm return false
+     *    if terms are different between it of log on prevLogIndex and prevLogTerm，return false
+     *    if existed log item conflict with new log item(same index but differnt term)，delete this item and all the items after it
+     *   append item which doesn't existed in its own log items 附加任何在已有的日志中不存在的条目
      *    如果 leaderCommit > commitIndex，令 commitIndex 等于 leaderCommit 和 新日志条目索引值中较小的一个
      */
     @Override
@@ -114,7 +109,7 @@ public class DefaultConsensus implements Consensus {
             }
 
             result.setTerm(node.getCurrentTerm());
-            // 不够格
+            // not qualified
             if (param.getTerm() < node.getCurrentTerm()) {
                 return result;
             }
@@ -123,59 +118,59 @@ public class DefaultConsensus implements Consensus {
             node.preElectionTime = System.currentTimeMillis();
             node.peerSet.setLeader(new Peer(param.getLeaderId()));
 
-            // 够格
+            // qualified
             if (param.getTerm() >= node.getCurrentTerm()) {
                 LOGGER.debug("node {} become FOLLOWER, currentTerm : {}, param Term : {}, param serverId",
                     node.peerSet.getSelf(), node.currentTerm, param.getTerm(), param.getServerId());
-                // 认怂
+                // keep silent
                 node.status = NodeStatus.FOLLOWER;
             }
-            // 使用对方的 term.
+            // use his term.
             node.setCurrentTerm(param.getTerm());
 
-            //心跳
+            //heart beat
             if (param.getEntries() == null || param.getEntries().length == 0) {
                 LOGGER.info("node {} append heartbeat success , he's term : {}, my term : {}",
                     param.getLeaderId(), param.getTerm(), node.getCurrentTerm());
                 return AentryResult.newBuilder().term(node.getCurrentTerm()).success(true).build();
             }
 
-            // 真实日志
-            // 第一次
+            // true logs
+            // 1st time
             if (node.getLogModule().getLastIndex() != 0 && param.getPrevLogIndex() != 0) {
                 LogEntry logEntry;
                 if ((logEntry = node.getLogModule().read(param.getPrevLogIndex())) != null) {
-                    // 如果日志在 prevLogIndex 位置处的日志条目的任期号和 prevLogTerm 不匹配，则返回 false
-                    // 需要减小 nextIndex 重试.
+                    // if term is on prevLogIndex is different with on prevLogTerm, return false
+                    // need lower nextIndex, and retry.
                     if (logEntry.getTerm() != param.getPreLogTerm()) {
                         return result;
                     }
                 } else {
-                    // index 不对, 需要递减 nextIndex 重试.
+                    // index incorrect, need to decrease nextIndex and retry.
                     return result;
                 }
 
             }
 
-            // 如果已经存在的日志条目和新的产生冲突（索引值相同但是任期号不同），删除这一条和之后所有的
+            // if conflict occur between existed log and new log（same index but different terms），delete this and all logs after it
             LogEntry existLog = node.getLogModule().read(((param.getPrevLogIndex() + 1)));
             if (existLog != null && existLog.getTerm() != param.getEntries()[0].getTerm()) {
-                // 删除这一条和之后所有的, 然后写入日志和状态机.
+                // delete this and all logs after it, and write in statemachine.
                 node.getLogModule().removeOnStartIndex(param.getPrevLogIndex() + 1);
             } else if (existLog != null) {
-                // 已经有日志了, 不能重复写入.
+                // log existed, cannot write again.
                 result.setSuccess(true);
                 return result;
             }
 
-            // 写进日志并且应用到状态机
+            // write in log and apply in state machine
             for (LogEntry entry : param.getEntries()) {
                 node.getLogModule().write(entry);
                 node.stateMachine.apply(entry);
                 result.setSuccess(true);
             }
 
-            //如果 leaderCommit > commitIndex，令 commitIndex 等于 leaderCommit 和 新日志条目索引值中较小的一个
+            //if leaderCommit > commitIndex， commitIndex = min(leaderCommit,new index)
             if (param.getLeaderCommit() > node.getCommitIndex()) {
                 int commitIndex = (int) Math.min(param.getLeaderCommit(), node.getLogModule().getLastIndex());
                 node.setCommitIndex(commitIndex);
@@ -185,7 +180,6 @@ public class DefaultConsensus implements Consensus {
             result.setTerm(node.getCurrentTerm());
 
             node.status = NodeStatus.FOLLOWER;
-            // TODO, 是否应当在成功回复之后, 才正式提交? 防止 leader "等待回复"过程中 挂掉.
             return result;
         } finally {
             appendLock.unlock();

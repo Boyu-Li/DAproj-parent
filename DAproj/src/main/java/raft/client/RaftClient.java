@@ -31,29 +31,36 @@ public class RaftClient {
     private static int logIndex;
 
     private final static RpcClient client = new DefaultRpcClient();
+    private final static ClientOperation op = new ClientOperation();
 
     static String addr = "localhost:8778";
     static List<String> list = Lists.newArrayList("localhost:8775","localhost:8776","localhost:8777", "localhost:8778", "localhost:8779");
 
     public static void main(String[] args) throws RemotingException, InterruptedException {
+    	
     	try {
-			String path = "D:/test";
-	        ListenerThread fileListener = new ListenerThread(path);
-	        fileListener.addListener(path);	   
+			
+	           
 			Scanner sc = new Scanner(System.in);					
 			while (true) {
 			System.out.println("please select your starting mode, 1 for synchronize, 2 for reset");
 			String answer = sc.nextLine();
 	        if (answer.equals("1")){
-	        	fileListener.reset();
+	        	op.reset();
 	        	syn_request();
 	        	System.out.println("you choose to synchronize your folder");
+	        	String path = "D:/test";
+		        ListenerThread fileListener = new ListenerThread(path);
+		        fileListener.addListener(path);	
 	        	break;
 	        }
 	        else if (answer.equals("2")) {
-	        	fileListener.reset();
+	        	op.reset();
 	        	reset_request();
 	        	System.out.println("you choose to reset your folder");
+	        	String path = "D:/test";
+		        ListenerThread fileListener = new ListenerThread(path);
+		        fileListener.addListener(path);	
 	        	break;
 	        }
 	        else {
@@ -62,33 +69,6 @@ public class RaftClient {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-//    	while(true)
-//    	{
-//    		JSONObject a = new JSONObject();
-//            Scanner in = new Scanner(System.in);
-//            int order = in.nextInt();
-//            if(order ==1) {
-//            	a.put("key", "2");
-//                a.put("value", "syn");
-//            }
-//            else if(order ==2) {
-//            	a.put("key", "2");
-//                a.put("value", "reset");
-//            }
-//            else if(order == 0) {
-//            	break;
-//            }
-//            else {
-//            	int value = in.nextInt();
-//            	a.put("key", "1");
-//                a.put("value", ""+value);
-//            }
-//        	request(a);
-//    	}
-        
-
-
     }
     
     public static void request(JSONObject req) throws RemotingException, InterruptedException {
@@ -147,34 +127,22 @@ public class RaftClient {
 		for (int i = 3; ; i++) {
             try {
                 int index = (int) (count.incrementAndGet() % list.size());
-                addr = list.get(index);
-
-                ClientKVReq obj = ClientKVReq.newBuilder().key("1").value("world1.txt").type(ClientKVReq.PUT).build();
 
                 Request<ClientKVReq> r = new Request<>();
-                r.setObj(obj);
-                r.setUrl(addr);
-                r.setCmd(Request.CLIENT_REQ);
+                
                 Response<String> response;
-                try {
-                    //response = client.send(r);
-                } catch (Exception e) {
-                    r.setUrl(list.get((int) ((count.incrementAndGet()) % list.size())));
-                    response = client.send(r);
-                }
 
                 //LOGGER.info("request content : {}, url : {}, put response : {}", obj.key + "=" + obj.getValue(), r.getUrl(), response.getResult());
 
                 SleepHelper.sleep(1000);
                 while(true)
                 {
-                	obj = ClientKVReq.newBuilder().key(""+ii).type(ClientKVReq.GET).build();
+                	ClientKVReq obj = ClientKVReq.newBuilder().key(""+ii).type(ClientKVReq.GET).build();
 
-                    addr = list.get(index);
                     addr = list.get(index);
                     r.setUrl(addr);
                     r.setObj(obj);
-
+                    r.setCmd(Request.CLIENT_REQ);
                     Response<LogEntry> response2;
                     try {
                         response2 = client.send(r);
@@ -189,6 +157,8 @@ public class RaftClient {
                     	System.out.println("asd");
 
                     LOGGER.info("request content : {}, url : {}, get response : {}", obj.key + "=" + obj.getValue(), r.getUrl(), response2.getResult());
+                    String modified_command=transRes(response2.toString());
+                    op.fileOperation(modified_command);
                     ii++;
                 }
                 logIndex = ii;
@@ -202,7 +172,12 @@ public class RaftClient {
         
 	}
     
-    public static void reset_request() throws RemotingException, InterruptedException {
+    private static String transRes(String string) {
+    	String s = string.split(", ")[1].split("=")[1];
+    	return s.substring(0,s.length() - 3);
+	}
+
+	public static void reset_request() throws RemotingException, InterruptedException {
 		AtomicLong count = new AtomicLong(5);
 		for (int i = 3; ; i++) {
             try {

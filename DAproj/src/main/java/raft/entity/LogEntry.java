@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 日志条目
+ * log items
  *
  * 
  * @see LogModule

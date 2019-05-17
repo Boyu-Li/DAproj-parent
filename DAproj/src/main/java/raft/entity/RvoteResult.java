@@ -7,17 +7,17 @@ import lombok.Setter;
 
 /**
  *
- * 请求投票 RPC 返回值.
+ * request vote RPC.
  *
  */
 @Getter
 @Setter
 public class RvoteResult implements Serializable {
 
-    /** 当前任期号，以便于候选人去更新自己的任期 */
+    /** current term,for candidate to update their term */
     long term;
 
-    /** 候选人赢得了此张选票时为真 */
+    /** true if be voted */
     boolean voteGranted;
 
     public RvoteResult(boolean voteGranted) {

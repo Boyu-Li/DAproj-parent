@@ -13,7 +13,7 @@ import raft.rpc.Response;
 
 /**
  *
- * 集群配置变更接口默认实现.
+ * port changes for cluster configuration.
  *
  * 
  */
@@ -28,11 +28,11 @@ public class ClusterMembershipChangesImpl implements ClusterMembershipChanges {
         this.node = node;
     }
 
-    /** 必须是同步的,一次只能添加一个节点
+    /** have to be synchronized,one node added one time
      * @param newPeer*/
     @Override
     public synchronized Result addPeer(Peer newPeer) {
-        // 已经存在
+        // existed
         if (node.peerSet.getPeersWithOutSelf().contains(newPeer)) {
             return new Result();
         }
@@ -51,7 +51,7 @@ public class ClusterMembershipChangesImpl implements ClusterMembershipChanges {
             }
 
             for (Peer item : node.peerSet.getPeersWithOutSelf()) {
-                // TODO 同步到其他节点.
+                // TODO synchronized to other nodes
                 Request request = Request.newBuilder()
                     .cmd(Request.CHANGE_CONFIG_ADD)
                     .url(newPeer.getAddr())
@@ -73,7 +73,7 @@ public class ClusterMembershipChangesImpl implements ClusterMembershipChanges {
     }
 
 
-    /** 必须是同步的,一次只能删除一个节点
+    /** have to be synchronized,one node deleted one time
      * @param oldPeer*/
     @Override
     public synchronized Result removePeer(Peer oldPeer) {

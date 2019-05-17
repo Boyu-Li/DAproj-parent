@@ -5,9 +5,7 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * ��ǰ�ڵ�� ͬ��.
- */
+
 @Getter
 @Setter
 public class Peer {
